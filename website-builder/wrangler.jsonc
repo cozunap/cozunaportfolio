@@ -1,0 +1,19 @@
+// Cloudflare Visual Website Builder Environment
+// See https://developers.cloudflare.com/workers/wrangler/configuration/
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "visual-builder-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-20",
+  "d1_databases": [
+    // { "binding": "DB", "database_name": "builder-db", "database_id": "YOUR_ID" }
+  ],
+  "r2_buckets": [
+    // { "binding": "MEDIA", "bucket_name": "builder-media" }
+  ],
+  "durable_objects": {
+    "bindings": [
+      // { "name": "REALTIME_EDITOR", "class_name": "EditorCoordinator" }
+    ]
+  }
+}
