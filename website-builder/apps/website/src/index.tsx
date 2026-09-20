@@ -27,58 +27,74 @@ const renderNode = (node: any, allNodes: any[], componentsMap: Record<string, an
     return <div class="w-full">{compNodes.map((n: any) => renderNode(n, compNodes, componentsMap))}</div>;
   }
   
-  // Find nested children
   const children = allNodes.filter(n => n.parentId === node.id);
 
-  switch (node.type) {
-    case 'heading': return <h1 class="text-5xl font-bold font-serif text-navy mb-6">{node.props.text || 'Heading'}</h1>;
-    case 'text': return <p class="text-lg text-gray-700 leading-relaxed mb-4 whitespace-pre-wrap">{node.props.text || 'Text block'}</p>;
-    case 'button': return <button class="bg-navy hover:bg-gold transition-colors text-white px-8 py-3 rounded font-medium shadow-md mt-4">{node.props.text || 'Button'}</button>;
-    case 'image': return <div class="bg-gray-200 h-64 w-full rounded my-6 flex items-center justify-center text-gray-500 shadow-inner">Image Placeholder</div>;
-    case 'spacer': return <div style={{ height: `${node.props.height || 50}px` }} class="w-full block"></div>;
-    case 'divider': return <hr style={{ borderColor: node.props.color || '#e5e7eb', borderWidth: `${node.props.thickness || 1}px` }} class="w-full my-8 block" />;
-    case 'video': return (
-      <div class="w-full aspect-video rounded-lg overflow-hidden my-6 shadow-lg">
-        <iframe src={node.props.url} class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-      </div>
-    );
-    case 'map': return (
-      <div class="w-full h-96 rounded-lg overflow-hidden my-6 shadow-md bg-gray-100 flex items-center justify-center text-gray-400">
-        Google Maps API Integration Placeholder (Address: {node.props.address})
-      </div>
-    );
-    case 'icon': return (
-      <div class="inline-flex items-center justify-center p-4">
-        <span style={{color: node.props.color || '#0d1f3c', fontSize: `${node.props.size || 24}px`}}>★</span>
-      </div>
-    );
-    case 'image_box': return (
-      <div class="text-center p-8 border border-gray-100 rounded-xl shadow-md bg-white hover:shadow-lg transition-shadow">
-        <div class="w-full h-48 bg-gray-100 rounded-lg mb-6"></div>
-        <h3 class="font-serif font-bold text-2xl text-navy mb-3">{node.props.title || 'Title'}</h3>
-        <p class="text-gray-600 text-base">{node.props.description || 'Description'}</p>
-      </div>
-    );
-    case 'container': return (
-      <div style={{ padding: `${node.props.padding || 20}px`, backgroundColor: node.props.bgColor || '#ffffff' }} class="w-full rounded-lg shadow-sm border border-gray-100 mb-6">
-        {children.map(child => renderNode(child, allNodes, componentsMap))}
-      </div>
-    );
-    case 'grid': return (
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${node.props.columns || 2}, 1fr)`, gap: `${node.props.gap || 16}px` }} class="w-full my-6">
-        {Array.from({length: node.props.columns || 2}).map((_, i) => {
-           const colId = `${node.id}-col-${i}`;
-           const colChildren = allNodes.filter(n => n.parentId === colId);
-           return (
-             <div class="flex flex-col">
-               {colChildren.map(child => renderNode(child, allNodes, componentsMap))}
-             </div>
-           );
-        })}
-      </div>
-    );
-    default: return null;
+  const styleObj = {
+    textAlign: node.props.textAlign || 'left',
+    marginTop: `${node.props.marginTop || 0}px`,
+    marginBottom: `${node.props.marginBottom || 0}px`,
+    marginLeft: `${node.props.marginLeft || 0}px`,
+    marginRight: `${node.props.marginRight || 0}px`,
+    paddingTop: `${node.props.paddingTop || 0}px`,
+    paddingBottom: `${node.props.paddingBottom || 0}px`,
+    paddingLeft: `${node.props.paddingLeft || 0}px`,
+    paddingRight: `${node.props.paddingRight || 0}px`,
+    backgroundColor: node.props.bgColor || 'transparent',
+  };
+
+  const renderContent = () => {
+    switch (node.type) {
+      case 'heading': return <h1 style={styleObj} class="text-5xl font-bold font-serif text-navy">{node.props.text || 'Heading'}</h1>;
+      case 'text': return <p style={styleObj} class="text-lg text-gray-700 leading-relaxed whitespace-pre-wrap">{node.props.text || 'Text block'}</p>;
+      case 'button': return <div style={styleObj}><button class="bg-navy hover:bg-gold transition-colors text-white px-8 py-3 rounded font-medium shadow-md">{node.props.text || 'Button'}</button></div>;
+      case 'image': return <div style={styleObj} class="bg-gray-200 h-64 w-full rounded flex items-center justify-center text-gray-500 shadow-inner">Image Placeholder</div>;
+      case 'spacer': return <div style={{...styleObj, height: `${node.props.height || 50}px`}} class="w-full block"></div>;
+      case 'divider': return <div style={styleObj}><hr style={{ borderColor: node.props.color || '#e5e7eb', borderWidth: `${node.props.thickness || 1}px` }} class="w-full block" /></div>;
+      case 'video': return (
+        <div style={styleObj} class="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
+          <iframe src={node.props.url} class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+      );
+      case 'map': return (
+        <div style={styleObj} class="w-full h-96 rounded-lg overflow-hidden shadow-md bg-gray-100 flex items-center justify-center text-gray-400">
+          Google Maps API Integration Placeholder (Address: {node.props.address})
+        </div>
+      );
+      case 'icon': return (
+        <div style={styleObj} class="inline-flex items-center justify-center">
+          <span style={{color: node.props.color || '#0d1f3c', fontSize: `${node.props.size || 24}px`}}>★</span>
+        </div>
+      );
+      case 'image_box': return (
+        <div style={styleObj} class="text-center border border-gray-100 rounded-xl shadow-md bg-white hover:shadow-lg transition-shadow">
+          <div class="w-full h-48 bg-gray-100 rounded-lg mb-6"></div>
+          <h3 class="font-serif font-bold text-2xl text-navy mb-3">{node.props.title || 'Title'}</h3>
+          <p class="text-gray-600 text-base">{node.props.description || 'Description'}</p>
+        </div>
+      );
+      case 'container': return (
+        <div style={styleObj} class="w-full rounded-lg shadow-sm border border-gray-100">
+          {children.map(child => renderNode(child, allNodes, componentsMap))}
+        </div>
+      );
+      case 'grid': return (
+        <div style={{ ...styleObj, display: 'grid', gridTemplateColumns: `repeat(${node.props.columns || 2}, 1fr)`, gap: `${node.props.gap || 16}px` }} class="w-full">
+          {Array.from({length: node.props.columns || 2}).map((_, i) => {
+             const colId = `${node.id}-col-${i}`;
+             const colChildren = allNodes.filter(n => n.parentId === colId);
+             return (
+               <div class="flex flex-col">
+                 {colChildren.map(child => renderNode(child, allNodes, componentsMap))}
+               </div>
+             );
+          })}
+        </div>
+      );
+      default: return null;
+    }
   }
+
+  return renderContent();
 };
 
 app.get('/*', async (c) => {

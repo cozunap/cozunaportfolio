@@ -48,6 +48,19 @@ export const useBuilderStore = create<BuilderState>((set) => ({
   setGlobalComponents: (globalComponents) => set({ globalComponents }),
   
   addNode: (node) => set((state) => {
+    // Universal styling props for ALL elements
+    const universalProps = {
+      textAlign: 'left',
+      marginTop: 0,
+      marginBottom: node.type === 'container' || node.type === 'grid' ? 0 : 16,
+      marginLeft: 0,
+      marginRight: 0,
+      paddingTop: 0,
+      paddingBottom: 0,
+      paddingLeft: 0,
+      paddingRight: 0,
+    };
+
     const defaultProps: Record<string, any> = {};
     if (node.type === 'heading') defaultProps.text = 'New Heading';
     if (node.type === 'text') defaultProps.text = 'New Text Block';
@@ -58,11 +71,11 @@ export const useBuilderStore = create<BuilderState>((set) => ({
     if (node.type === 'map') defaultProps.address = 'New York, NY';
     if (node.type === 'icon') { defaultProps.icon = 'Star'; defaultProps.color = '#0d1f3c'; defaultProps.size = 24; }
     if (node.type === 'image_box') { defaultProps.title = 'Title'; defaultProps.description = 'Description'; }
-    if (node.type === 'container') { defaultProps.padding = 20; defaultProps.bgColor = '#ffffff'; }
+    if (node.type === 'container') { defaultProps.paddingTop = 20; defaultProps.paddingBottom = 20; defaultProps.paddingLeft = 20; defaultProps.paddingRight = 20; defaultProps.bgColor = '#ffffff'; }
     if (node.type === 'grid') { defaultProps.columns = 2; defaultProps.gap = 16; }
     
     return {
-      nodes: [...state.nodes, { ...node, props: { ...defaultProps, ...node.props }, id: crypto.randomUUID() }]
+      nodes: [...state.nodes, { ...node, props: { ...universalProps, ...defaultProps, ...node.props }, id: crypto.randomUUID() }]
     };
   }),
   
@@ -90,7 +103,6 @@ export const useBuilderStore = create<BuilderState>((set) => ({
   }),
   
   moveNode: (activeId, overId) => set((state) => {
-    // Basic root-level sort
     const oldIndex = state.nodes.findIndex(n => n.id === activeId);
     const newIndex = state.nodes.findIndex(n => n.id === overId);
     if (oldIndex === -1 || newIndex === -1) return state;
