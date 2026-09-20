@@ -67,14 +67,14 @@ function CanvasNode({ node, isNested = false }) {
     transform: CSS.Transform.toString(transform), 
     transition,
     textAlign: node.props.textAlign || 'left',
-    marginTop: `${node.props.marginTop || 0}px`,
-    marginBottom: `${node.props.marginBottom || 0}px`,
-    marginLeft: `${node.props.marginLeft || 0}px`,
-    marginRight: `${node.props.marginRight || 0}px`,
-    paddingTop: `${node.props.paddingTop || 0}px`,
-    paddingBottom: `${node.props.paddingBottom || 0}px`,
-    paddingLeft: `${node.props.paddingLeft || 0}px`,
-    paddingRight: `${node.props.paddingRight || 0}px`,
+    marginTop: node.props.marginTop || 0,
+    marginBottom: node.props.marginBottom || 0,
+    marginLeft: node.props.marginLeft || 0,
+    marginRight: node.props.marginRight || 0,
+    paddingTop: node.props.paddingTop || 0,
+    paddingBottom: node.props.paddingBottom || 0,
+    paddingLeft: node.props.paddingLeft || 0,
+    paddingRight: node.props.paddingRight || 0,
     backgroundColor: node.props.bgColor || 'transparent',
     width: node.props.width || '100%',
     minHeight: node.props.height || undefined,
@@ -433,11 +433,11 @@ function App() {
                         </div>
 
                         <div>
-                          <label className="block text-xs font-bold text-gray-500 mb-2">Alignment</label>
+                          <label className="block text-xs font-bold text-gray-500 mb-2">Alignment (Auto-Centers Block)</label>
                           <div className="flex border border-gray-200 rounded-lg overflow-hidden">
-                            <button onClick={() => updateNodeProp(selectedId, 'textAlign', 'left')} className={`flex-1 py-1.5 flex justify-center ${selectedNode.props.textAlign === 'left' ? 'bg-navy text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}><AlignLeft size={16}/></button>
-                            <button onClick={() => updateNodeProp(selectedId, 'textAlign', 'center')} className={`flex-1 py-1.5 flex justify-center border-l border-r border-gray-200 ${selectedNode.props.textAlign === 'center' ? 'bg-navy text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}><AlignCenter size={16}/></button>
-                            <button onClick={() => updateNodeProp(selectedId, 'textAlign', 'right')} className={`flex-1 py-1.5 flex justify-center ${selectedNode.props.textAlign === 'right' ? 'bg-navy text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}><AlignRight size={16}/></button>
+                            <button onClick={() => { updateNodeProp(selectedId, 'textAlign', 'left'); updateNodeProp(selectedId, 'marginLeft', '0px'); updateNodeProp(selectedId, 'marginRight', 'auto'); }} className={`flex-1 py-1.5 flex justify-center ${selectedNode.props.textAlign === 'left' ? 'bg-navy text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}><AlignLeft size={16}/></button>
+                            <button onClick={() => { updateNodeProp(selectedId, 'textAlign', 'center'); updateNodeProp(selectedId, 'marginLeft', 'auto'); updateNodeProp(selectedId, 'marginRight', 'auto'); }} className={`flex-1 py-1.5 flex justify-center border-l border-r border-gray-200 ${selectedNode.props.textAlign === 'center' ? 'bg-navy text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}><AlignCenter size={16}/></button>
+                            <button onClick={() => { updateNodeProp(selectedId, 'textAlign', 'right'); updateNodeProp(selectedId, 'marginLeft', 'auto'); updateNodeProp(selectedId, 'marginRight', '0px'); }} className={`flex-1 py-1.5 flex justify-center ${selectedNode.props.textAlign === 'right' ? 'bg-navy text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}><AlignRight size={16}/></button>
                           </div>
                         </div>
 
@@ -452,22 +452,22 @@ function App() {
                         )}
 
                         <div>
-                          <label className="block text-xs font-bold text-gray-500 mb-2">Margin (px)</label>
+                          <label className="block text-xs font-bold text-gray-500 mb-2">Margin (px, %, auto)</label>
                           <div className="grid grid-cols-4 gap-2">
-                            <div><span className="block text-[10px] text-gray-400 text-center mb-1">TOP</span><input type="number" value={selectedNode.props.marginTop || 0} onChange={(e) => updateNodeProp(selectedId, 'marginTop', parseInt(e.target.value))} className="w-full border p-1.5 text-xs text-center rounded"/></div>
-                            <div><span className="block text-[10px] text-gray-400 text-center mb-1">RIGHT</span><input type="number" value={selectedNode.props.marginRight || 0} onChange={(e) => updateNodeProp(selectedId, 'marginRight', parseInt(e.target.value))} className="w-full border p-1.5 text-xs text-center rounded"/></div>
-                            <div><span className="block text-[10px] text-gray-400 text-center mb-1">BTM</span><input type="number" value={selectedNode.props.marginBottom || 0} onChange={(e) => updateNodeProp(selectedId, 'marginBottom', parseInt(e.target.value))} className="w-full border p-1.5 text-xs text-center rounded"/></div>
-                            <div><span className="block text-[10px] text-gray-400 text-center mb-1">LEFT</span><input type="number" value={selectedNode.props.marginLeft || 0} onChange={(e) => updateNodeProp(selectedId, 'marginLeft', parseInt(e.target.value))} className="w-full border p-1.5 text-xs text-center rounded"/></div>
+                            <div><span className="block text-[10px] text-gray-400 text-center mb-1">TOP</span><input type="text" value={selectedNode.props.marginTop || 0} onChange={(e) => updateNodeProp(selectedId, 'marginTop', e.target.value)} className="w-full border p-1.5 text-xs text-center rounded"/></div>
+                            <div><span className="block text-[10px] text-gray-400 text-center mb-1">RIGHT</span><input type="text" value={selectedNode.props.marginRight || 0} onChange={(e) => updateNodeProp(selectedId, 'marginRight', e.target.value)} className="w-full border p-1.5 text-xs text-center rounded"/></div>
+                            <div><span className="block text-[10px] text-gray-400 text-center mb-1">BTM</span><input type="text" value={selectedNode.props.marginBottom || 0} onChange={(e) => updateNodeProp(selectedId, 'marginBottom', e.target.value)} className="w-full border p-1.5 text-xs text-center rounded"/></div>
+                            <div><span className="block text-[10px] text-gray-400 text-center mb-1">LEFT</span><input type="text" value={selectedNode.props.marginLeft || 0} onChange={(e) => updateNodeProp(selectedId, 'marginLeft', e.target.value)} className="w-full border p-1.5 text-xs text-center rounded"/></div>
                           </div>
                         </div>
 
                         <div>
-                          <label className="block text-xs font-bold text-gray-500 mb-2">Padding (px)</label>
+                          <label className="block text-xs font-bold text-gray-500 mb-2">Padding (px, %, auto)</label>
                           <div className="grid grid-cols-4 gap-2">
-                            <div><span className="block text-[10px] text-gray-400 text-center mb-1">TOP</span><input type="number" value={selectedNode.props.paddingTop || 0} onChange={(e) => updateNodeProp(selectedId, 'paddingTop', parseInt(e.target.value))} className="w-full border p-1.5 text-xs text-center rounded"/></div>
-                            <div><span className="block text-[10px] text-gray-400 text-center mb-1">RIGHT</span><input type="number" value={selectedNode.props.paddingRight || 0} onChange={(e) => updateNodeProp(selectedId, 'paddingRight', parseInt(e.target.value))} className="w-full border p-1.5 text-xs text-center rounded"/></div>
-                            <div><span className="block text-[10px] text-gray-400 text-center mb-1">BTM</span><input type="number" value={selectedNode.props.paddingBottom || 0} onChange={(e) => updateNodeProp(selectedId, 'paddingBottom', parseInt(e.target.value))} className="w-full border p-1.5 text-xs text-center rounded"/></div>
-                            <div><span className="block text-[10px] text-gray-400 text-center mb-1">LEFT</span><input type="number" value={selectedNode.props.paddingLeft || 0} onChange={(e) => updateNodeProp(selectedId, 'paddingLeft', parseInt(e.target.value))} className="w-full border p-1.5 text-xs text-center rounded"/></div>
+                            <div><span className="block text-[10px] text-gray-400 text-center mb-1">TOP</span><input type="text" value={selectedNode.props.paddingTop || 0} onChange={(e) => updateNodeProp(selectedId, 'paddingTop', e.target.value)} className="w-full border p-1.5 text-xs text-center rounded"/></div>
+                            <div><span className="block text-[10px] text-gray-400 text-center mb-1">RIGHT</span><input type="text" value={selectedNode.props.paddingRight || 0} onChange={(e) => updateNodeProp(selectedId, 'paddingRight', e.target.value)} className="w-full border p-1.5 text-xs text-center rounded"/></div>
+                            <div><span className="block text-[10px] text-gray-400 text-center mb-1">BTM</span><input type="text" value={selectedNode.props.paddingBottom || 0} onChange={(e) => updateNodeProp(selectedId, 'paddingBottom', e.target.value)} className="w-full border p-1.5 text-xs text-center rounded"/></div>
+                            <div><span className="block text-[10px] text-gray-400 text-center mb-1">LEFT</span><input type="text" value={selectedNode.props.paddingLeft || 0} onChange={(e) => updateNodeProp(selectedId, 'paddingLeft', e.target.value)} className="w-full border p-1.5 text-xs text-center rounded"/></div>
                           </div>
                         </div>
                       </div>
