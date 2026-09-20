@@ -77,8 +77,21 @@ const renderNode = (node: any, allNodes: any[], componentsMap: Record<string, an
         );
       }
       case 'map': return (
-        <div style={styleObj} class="w-full h-96 rounded-lg overflow-hidden shadow-md bg-gray-100 flex items-center justify-center text-gray-400">
-          Google Maps API Integration Placeholder (Address: {node.props.address})
+        <div style={styleObj} class="w-full">
+          {node.props.address ? (
+            <div class="w-full h-96 rounded-lg overflow-hidden shadow-md">
+              <iframe 
+                src={`https://maps.google.com/maps?q=${encodeURIComponent(node.props.address)}&output=embed`} 
+                class="w-full h-full" 
+                frameborder="0" 
+                allowfullscreen
+              ></iframe>
+            </div>
+          ) : (
+            <div class="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center flex-col text-gray-400 shadow-inner">
+              Map Placeholder
+            </div>
+          )}
         </div>
       );
       case 'icon': return (

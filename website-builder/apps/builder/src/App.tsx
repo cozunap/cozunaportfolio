@@ -118,9 +118,22 @@ function CanvasNode({ node, isNested = false }) {
         );
       }
       case 'map': return (
-        <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center flex-col text-gray-500 relative">
+        <div className="w-full relative">
           <div className="absolute inset-0 z-10 cursor-pointer"></div>
-          <MapPin size={32} className="mb-2"/>Map: {node.props.address}
+          {node.props.address ? (
+            <div className="w-full h-64 rounded-lg overflow-hidden shadow-md">
+              <iframe 
+                src={`https://maps.google.com/maps?q=${encodeURIComponent(node.props.address)}&output=embed`} 
+                className="w-full h-full pointer-events-none" 
+                frameBorder="0" 
+                allowFullScreen
+              ></iframe>
+            </div>
+          ) : (
+            <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center flex-col text-gray-500">
+              <MapPin size={32} className="mb-2"/>Enter Address in Inspector
+            </div>
+          )}
         </div>
       );
       case 'icon': return <div className="inline-flex items-center justify-center"><Star size={node.props.size} color={node.props.color} /></div>;
