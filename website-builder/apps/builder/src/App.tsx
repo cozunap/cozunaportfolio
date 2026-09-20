@@ -1,6 +1,9 @@
 // @ts-nocheck
 import React, { useState } from 'react';
-import { DndContext, DragOverlay, useDraggable, useDroppable, pointerWithin } from '@dnd-kit/core';
+import { 
+  DndContext, DragOverlay, useDraggable, useDroppable, pointerWithin,
+  useSensor, useSensors, PointerSensor 
+} from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { 
@@ -82,22 +85,44 @@ function CanvasNode({ node, isNested = false }) {
       case 'heading': return <h1 className="text-4xl font-bold font-serif text-navy">{node.props.text}</h1>;
       case 'text': return <p className="text-gray-600 whitespace-pre-wrap">{node.props.text}</p>;
       case 'button': return <button className="bg-navy text-white px-6 py-2 rounded font-medium shadow-md inline-block">{node.props.text}</button>;
-      case 'image': return <div className="bg-gray-100 border-2 border-dashed border-gray-300 h-48 w-full flex items-center justify-center text-gray-400 rounded-lg"><ImageIcon size={48} className="opacity-50"/></div>;
+      case 'image': return (
+        <div className="w-full flex justify-center">
+          {node.props.url ? (
+            <img src={node.props.url} alt="User placed" className="max-w-full h-auto rounded-lg shadow-sm" />
+          ) : (
+            <div className="bg-gray-100 border-2 border-dashed border-gray-300 h-48 w-full flex items-center justify-center text-gray-400 rounded-lg"><ImageIcon size={48} className="opacity-50"/></div>
+          )}
+        </div>
+      );
       case 'spacer': return <div style={{ height: `${node.props.height}px` }} className="w-full block"></div>;
       case 'divider': return <hr style={{ borderColor: node.props.color, borderWidth: `${node.props.thickness}px` }} className="w-full" />;
-      case 'video': return <div className="w-full aspect-video bg-gray-900 rounded-lg flex items-center justify-center"><Video size={48} className="text-white opacity-50"/></div>;
+      case 'video': return (
+        <div className="w-full">
+           {node.props.url && node.props.url.includes('youtube.com') ? (
+             <div className="w-full aspect-video rounded-lg overflow-hidden shadow-md">
+               <iframe src={node.props.url} className="w-full h-full" frameBorder="0" allowFullScreen></iframe>
+             </div>
+           ) : (
+             <div className="w-full aspect-video bg-gray-900 rounded-lg flex items-center justify-center"><Video size={48} className="text-white opacity-50"/></div>
+           )}
+        </div>
+      );
       case 'map': return <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center flex-col text-gray-500"><MapPin size={32} className="mb-2"/>Map: {node.props.address}</div>;
       case 'icon': return <div className="inline-flex items-center justify-center"><Star size={node.props.size} color={node.props.color} /></div>;
       case 'image_box': return (
         <div className="text-center p-4 border border-gray-100 rounded-lg shadow-sm bg-white">
-          <div className="w-full h-32 bg-gray-100 rounded mb-4 flex items-center justify-center text-gray-400"><ImageIcon/></div>
+          {node.props.url ? (
+            <img src={node.props.url} className="w-full h-auto object-cover rounded mb-4" />
+          ) : (
+            <div className="w-full h-32 bg-gray-100 rounded mb-4 flex items-center justify-center text-gray-400"><ImageIcon/></div>
+          )}
           <h3 className="font-serif font-bold text-xl text-navy mb-2">{node.props.title}</h3>
           <p className="text-gray-500 text-sm">{node.props.description}</p>
         </div>
       );
       case 'container': return (
         <DropZone id={node.id} className="w-full min-h-[100px] border border-dashed border-gray-300">
-          {childrenNodes.length === 0 && <div className="text-gray-400 text-center text-sm p-4">Drop elements here</div>}
+          {childrenNodes.length === 0 && <div className="text-gray-400 text-center text-sm p-4 pointer-events-none">Drop elements here</div>}
           {childrenNodes.map(child => <CanvasNode key={child.id} node={child} isNested={true} />)}
         </DropZone>
       );
@@ -108,7 +133,7 @@ function CanvasNode({ node, isNested = false }) {
             const colNodes = nodes.filter(n => n.parentId === colId);
             return (
               <DropZone key={i} id={colId} className="bg-gray-50 border border-dashed border-gray-300 min-h-[100px] rounded p-2 flex flex-col">
-                 {colNodes.length === 0 && <div className="text-xs text-gray-400 text-center my-auto">Col {i+1}</div>}
+                 {colNodes.length === 0 && <div className="text-xs text-gray-400 text-center my-auto pointer-events-none">Col {i+1}</div>}
                  {colNodes.map(child => <CanvasNode key={child.id} node={child} isNested={true} />)}
               </DropZone>
             );
@@ -128,11 +153,11 @@ function CanvasNode({ node, isNested = false }) {
   return (
     <div 
       ref={setNodeRef} style={style} {...attributes} {...listeners}
-      onClick={(e) => { e.stopPropagation(); selectNode(node.id); }}
-      className={`relative group cursor-pointer border-2 ${isSelected ? 'border-gold ring-2 ring-gold/20' : 'border-transparent hover:border-gray-200'} transition-all duration-200`}
+      onPointerDown={(e) => { e.stopPropagation(); selectNode(node.id); }}
+      className={`relative group cursor-pointer border-2 ${isSelected ? 'border-gold ring-2 ring-gold/20' : 'border-transparent hover:border-blue-200'} transition-all duration-200`}
     >
       {isSelected && (
-        <div className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1.5 shadow-md cursor-pointer hover:bg-red-600 hover:scale-110 transition-transform z-20" onClick={(e) => { e.stopPropagation(); deleteNode(node.id); }}>
+        <div className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1.5 shadow-md cursor-pointer hover:bg-red-600 hover:scale-110 transition-transform z-20" onPointerDown={(e) => { e.stopPropagation(); deleteNode(node.id); }}>
           <Trash2 size={14} />
         </div>
       )}
@@ -153,6 +178,15 @@ function App() {
   const [showPageModal, setShowPageModal] = useState(false);
   const [newPageTitle, setNewPageTitle] = useState('');
   const [newPageSlug, setNewPageSlug] = useState('');
+
+  // Important: Fixes the dnd-kit click swallowing bug
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    })
+  );
 
   const rootNodes = nodes.filter(n => !n.parentId);
 
@@ -183,7 +217,7 @@ function App() {
   const selectedNode = nodes.find(n => n.id === selectedId);
 
   return (
-    <DndContext collisionDetection={pointerWithin} onDragStart={(e) => setActiveDragId(e.active.id)} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragStart={(e) => setActiveDragId(e.active.id)} onDragEnd={handleDragEnd}>
       <div className="flex h-screen w-screen bg-[#f3f4f6] text-gray-900 overflow-hidden font-sans">
         
         {/* LEFT SIDEBAR */}
@@ -250,10 +284,10 @@ function App() {
               <button onClick={publish} disabled={isPublishing} className="bg-navy text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-gold transition-colors shadow-md">{isPublishing ? "Publishing..." : "Publish Page"}</button>
             </div>
           </div>
-          <div className="flex-1 overflow-auto flex items-start justify-center pt-24 pb-32 w-full h-full">
-             <DropZone id="canvas" className="w-full max-w-5xl min-h-[800px] bg-white mx-auto shadow-xl ring-1 ring-gray-200 p-8" onClick={() => useBuilderStore.getState().selectNode(null)}>
+          <div className="flex-1 overflow-auto flex items-start justify-center pt-24 pb-32 w-full h-full" onPointerDown={() => useBuilderStore.getState().selectNode(null)}>
+             <DropZone id="canvas" className="w-full max-w-5xl min-h-[800px] bg-white mx-auto shadow-xl ring-1 ring-gray-200 p-8">
                 {rootNodes.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                  <div className="h-full flex flex-col items-center justify-center text-gray-400 pointer-events-none">
                     <div className="p-8 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center">
                       <Plus size={32} className="mb-4 text-gray-300" /><p className="text-lg font-medium text-gray-500">Drag elements here</p>
                     </div>
@@ -306,17 +340,21 @@ function App() {
                             <div><label className="block text-xs font-bold text-gray-500 mb-1">Gap (px)</label><input type="number" min="0" max="64" value={selectedNode.props.gap} onChange={(e) => updateNodeProp(selectedId, 'gap', parseInt(e.target.value))} className="w-full border border-gray-200 p-2 text-sm rounded"/></div>
                           </div>
                         )}
+                        
+                        {/* New URL fields for Images and Video */}
+                        {(selectedNode.type === 'image' || selectedNode.type === 'image_box' || selectedNode.type === 'video' || selectedNode.type === 'map') && (
+                          <div>
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Media URL (Paste Link)</label>
+                            <input type="text" value={selectedNode.props.url || selectedNode.props.address || ''} onChange={(e) => updateNodeProp(selectedId, selectedNode.type === 'map' ? 'address' : 'url', e.target.value)} placeholder="https://..." className="w-full border border-gray-200 p-2 text-sm rounded outline-none focus:border-gold"/>
+                            <span className="text-[10px] text-gray-400 mt-1 block">Paste an image link or YouTube embed link</span>
+                          </div>
+                        )}
+
                         {(selectedNode.type === 'image_box') && (
                           <>
                             <input type="text" value={selectedNode.props.title} onChange={(e) => updateNodeProp(selectedId, 'title', e.target.value)} className="w-full border border-gray-200 p-2 text-sm rounded outline-none" placeholder="Title"/>
                             <textarea value={selectedNode.props.description} onChange={(e) => updateNodeProp(selectedId, 'description', e.target.value)} className="w-full border border-gray-200 p-2 text-sm rounded outline-none min-h-[60px]" placeholder="Description"/>
                           </>
-                        )}
-                        {(selectedNode.type === 'video' || selectedNode.type === 'map') && (
-                          <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1">{selectedNode.type === 'video' ? 'Video URL' : 'Address'}</label>
-                            <input type="text" value={selectedNode.props.url || selectedNode.props.address} onChange={(e) => updateNodeProp(selectedId, selectedNode.type === 'video' ? 'url' : 'address', e.target.value)} className="w-full border border-gray-200 p-2 text-sm rounded outline-none focus:border-gold"/>
-                          </div>
                         )}
                       </div>
                     </div>
@@ -327,8 +365,6 @@ function App() {
                     <div>
                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Advanced Style</h4>
                       <div className="space-y-4">
-                        
-                        {/* Alignment */}
                         <div>
                           <label className="block text-xs font-bold text-gray-500 mb-2">Alignment</label>
                           <div className="flex border border-gray-200 rounded-lg overflow-hidden">
@@ -338,7 +374,6 @@ function App() {
                           </div>
                         </div>
 
-                        {/* Background Color */}
                         {selectedNode.props.bgColor !== undefined && (
                           <div>
                             <label className="block text-xs font-bold text-gray-500 mb-1">Background Color</label>
@@ -349,7 +384,6 @@ function App() {
                           </div>
                         )}
 
-                        {/* Margins */}
                         <div>
                           <label className="block text-xs font-bold text-gray-500 mb-2">Margin (px)</label>
                           <div className="grid grid-cols-4 gap-2">
@@ -360,7 +394,6 @@ function App() {
                           </div>
                         </div>
 
-                        {/* Paddings */}
                         <div>
                           <label className="block text-xs font-bold text-gray-500 mb-2">Padding (px)</label>
                           <div className="grid grid-cols-4 gap-2">
@@ -370,7 +403,6 @@ function App() {
                             <div><span className="block text-[10px] text-gray-400 text-center mb-1">LEFT</span><input type="number" value={selectedNode.props.paddingLeft || 0} onChange={(e) => updateNodeProp(selectedId, 'paddingLeft', parseInt(e.target.value))} className="w-full border p-1.5 text-xs text-center rounded"/></div>
                           </div>
                         </div>
-
                       </div>
                     </div>
                   </div>

@@ -47,12 +47,26 @@ const renderNode = (node: any, allNodes: any[], componentsMap: Record<string, an
       case 'heading': return <h1 style={styleObj} class="text-5xl font-bold font-serif text-navy">{node.props.text || 'Heading'}</h1>;
       case 'text': return <p style={styleObj} class="text-lg text-gray-700 leading-relaxed whitespace-pre-wrap">{node.props.text || 'Text block'}</p>;
       case 'button': return <div style={styleObj}><button class="bg-navy hover:bg-gold transition-colors text-white px-8 py-3 rounded font-medium shadow-md">{node.props.text || 'Button'}</button></div>;
-      case 'image': return <div style={styleObj} class="bg-gray-200 h-64 w-full rounded flex items-center justify-center text-gray-500 shadow-inner">Image Placeholder</div>;
+      case 'image': return (
+        <div style={styleObj} class="w-full flex justify-center">
+          {node.props.url ? (
+            <img src={node.props.url} alt="User placed" class="max-w-full h-auto rounded-lg shadow-sm" />
+          ) : (
+            <div class="bg-gray-200 h-64 w-full rounded flex items-center justify-center text-gray-500 shadow-inner">Image Placeholder</div>
+          )}
+        </div>
+      );
       case 'spacer': return <div style={{...styleObj, height: `${node.props.height || 50}px`}} class="w-full block"></div>;
       case 'divider': return <div style={styleObj}><hr style={{ borderColor: node.props.color || '#e5e7eb', borderWidth: `${node.props.thickness || 1}px` }} class="w-full block" /></div>;
       case 'video': return (
-        <div style={styleObj} class="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
-          <iframe src={node.props.url} class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        <div style={styleObj} class="w-full">
+           {node.props.url && node.props.url.includes('youtube.com') ? (
+             <div class="w-full aspect-video rounded-lg overflow-hidden shadow-md">
+               <iframe src={node.props.url} class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+             </div>
+           ) : (
+             <div class="w-full aspect-video bg-gray-900 rounded-lg flex items-center justify-center text-white opacity-50">Video Placeholder</div>
+           )}
         </div>
       );
       case 'map': return (
@@ -66,8 +80,12 @@ const renderNode = (node: any, allNodes: any[], componentsMap: Record<string, an
         </div>
       );
       case 'image_box': return (
-        <div style={styleObj} class="text-center border border-gray-100 rounded-xl shadow-md bg-white hover:shadow-lg transition-shadow">
-          <div class="w-full h-48 bg-gray-100 rounded-lg mb-6"></div>
+        <div style={styleObj} class="text-center border border-gray-100 rounded-xl shadow-md bg-white hover:shadow-lg transition-shadow p-8">
+          {node.props.url ? (
+            <img src={node.props.url} class="w-full h-auto object-cover rounded mb-4" />
+          ) : (
+            <div class="w-full h-48 bg-gray-100 rounded-lg mb-6 flex items-center justify-center text-gray-400">Image Box Placeholder</div>
+          )}
           <h3 class="font-serif font-bold text-2xl text-navy mb-3">{node.props.title || 'Title'}</h3>
           <p class="text-gray-600 text-base">{node.props.description || 'Description'}</p>
         </div>
