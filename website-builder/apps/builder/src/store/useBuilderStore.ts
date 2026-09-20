@@ -48,7 +48,6 @@ export const useBuilderStore = create<BuilderState>((set) => ({
   setGlobalComponents: (globalComponents) => set({ globalComponents }),
   
   addNode: (node) => set((state) => {
-    // Default props based on type
     const defaultProps: Record<string, any> = {};
     if (node.type === 'heading') defaultProps.text = 'New Heading';
     if (node.type === 'text') defaultProps.text = 'New Text Block';
@@ -76,7 +75,6 @@ export const useBuilderStore = create<BuilderState>((set) => ({
   })),
   
   deleteNode: (id) => set((state) => {
-    // recursively delete children if we supported nesting
     const nodesToDelete = new Set([id]);
     let currentSize = 0;
     while(nodesToDelete.size > currentSize) {
@@ -92,6 +90,7 @@ export const useBuilderStore = create<BuilderState>((set) => ({
   }),
   
   moveNode: (activeId, overId) => set((state) => {
+    // Basic root-level sort
     const oldIndex = state.nodes.findIndex(n => n.id === activeId);
     const newIndex = state.nodes.findIndex(n => n.id === overId);
     if (oldIndex === -1 || newIndex === -1) return state;

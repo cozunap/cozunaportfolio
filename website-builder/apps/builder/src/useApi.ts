@@ -35,7 +35,6 @@ export function useApi() {
         setPageInfo(data.page.id, data.page.title, data.page.slug);
         setNodes(JSON.parse(data.page.page_json || '[]'));
       } else {
-        // If not found, reset
         setNodes([]);
       }
     } catch (e) {
@@ -46,19 +45,22 @@ export function useApi() {
   };
 
   const createPage = async (title: string, slug: string) => {
-    const id = slug.replace(/[^a-z0-9]/g, '-').replace(/^-+|-+$/g, '') || 'new-page';
+    const id = slug.replace(/[^a-z0-9]/g, '-').replace(/^-+|-+$/g, '') || 'new-page-' + Date.now();
     try {
       const res = await fetch(`${API_BASE}/pages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, title, slug, page_json: [] })
+        body: JSON.stringify({ id, site_id: "default-site", title, slug, page_json: [] })
       });
       if (res.ok) {
         await fetchLists();
         await loadPage(id);
+        return true;
       }
+      return false;
     } catch (e) {
       console.error(e);
+      return false;
     }
   };
 
@@ -68,7 +70,7 @@ export function useApi() {
       const res = await fetch(`${API_BASE}/components`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, name, component_json: nodesToSave })
+        body: JSON.stringify({ id, site_id: "default-site", name, component_json: nodesToSave })
       });
       if (res.ok) {
         await fetchLists();
@@ -80,7 +82,7 @@ export function useApi() {
 
   useEffect(() => {
     fetchLists();
-    loadPage(pageId);
+    if (pageId) loadPage(pageId);
   }, []);
 
   return { fetchLists, loadPage, createPage, saveComponent, loading };

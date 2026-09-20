@@ -1,13 +1,13 @@
 // @ts-nocheck
 import React, { useState } from 'react';
-import { DndContext, DragOverlay, useDraggable, useDroppable } from '@dnd-kit/core';
+import { DndContext, DragOverlay, useDraggable, useDroppable, closestCenter, pointerWithin } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { 
   Layout, MousePointer2, Type, Image as ImageIcon, Box, Layers, 
   Settings, Trash2, FileText, Component as CompIcon, Plus, Save,
   Square, Columns, Minus, ArrowDownUp, Video, MapPin, Star, AlignLeft,
-  ChevronDown, ChevronRight
+  ChevronDown, ChevronRight, X
 } from 'lucide-react';
 import { useBuilderStore } from './store/useBuilderStore';
 import { usePublish } from './usePublish';
@@ -31,7 +31,6 @@ function SidebarItem({ id, type, icon: Icon, label, ref_id = undefined }) {
   );
 }
 
-// Sidebar Category Accordion
 function SidebarCategory({ title, children, defaultOpen = false }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   return (
@@ -48,13 +47,26 @@ function SidebarCategory({ title, children, defaultOpen = false }) {
   );
 }
 
+// A generic Droppable zone for nested items
+function DropZone({ id, children, className }) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return (
+    <div ref={setNodeRef} className={`${className} transition-colors ${isOver ? 'ring-2 ring-gold bg-gold/5' : ''}`}>
+      {children}
+    </div>
+  );
+}
+
 // Canvas Sortable Node
-function CanvasNode({ node }) {
+function CanvasNode({ node, isNested = false }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: node.id });
-  const { selectNode, selectedId, deleteNode } = useBuilderStore();
+  const { selectNode, selectedId, deleteNode, nodes } = useBuilderStore();
   const isSelected = selectedId === node.id;
 
   const style = { transform: CSS.Transform.toString(transform), transition };
+
+  // For container/grid, get their nested children
+  const childrenNodes = nodes.filter(n => n.parentId === node.id);
 
   const renderContent = () => {
     switch (node.type) {
@@ -62,7 +74,7 @@ function CanvasNode({ node }) {
       case 'text': return <p className="text-gray-600">{node.props.text}</p>;
       case 'button': return <button className="bg-navy text-white px-6 py-2 rounded font-medium shadow-md">{node.props.text}</button>;
       case 'image': return <div className="bg-gray-100 border-2 border-dashed border-gray-300 h-48 w-full flex items-center justify-center text-gray-400 rounded-lg"><ImageIcon size={48} className="opacity-50"/></div>;
-      case 'spacer': return <div style={{ height: `${node.props.height}px` }} className="w-full bg-blue-50/30 border border-blue-100 border-dashed flex items-center justify-center text-xs text-blue-300">Spacer ({node.props.height}px)</div>;
+      case 'spacer': return <div style={{ height: `${node.props.height}px` }} className="w-full"></div>;
       case 'divider': return <hr style={{ borderColor: node.props.color, borderWidth: `${node.props.thickness}px` }} className="w-full my-4" />;
       case 'video': return <div className="w-full aspect-video bg-gray-900 rounded-lg flex items-center justify-center"><Video size={48} className="text-white opacity-50"/></div>;
       case 'map': return <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center flex-col text-gray-500"><MapPin size={32} className="mb-2"/>Map: {node.props.address}</div>;
@@ -74,21 +86,37 @@ function CanvasNode({ node }) {
           <p className="text-gray-500 text-sm">{node.props.description}</p>
         </div>
       );
-      case 'container': return <div style={{ padding: `${node.props.padding}px`, backgroundColor: node.props.bgColor }} className="w-full min-h-[100px] border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">Empty Container</div>;
+      
+      // Containers are drop zones!
+      case 'container': return (
+        <DropZone id={node.id} className="w-full min-h-[100px] border border-dashed border-gray-300" style={{ padding: `${node.props.padding}px`, backgroundColor: node.props.bgColor }}>
+          {childrenNodes.length === 0 && <div className="text-gray-400 text-center text-sm p-4">Drop elements here</div>}
+          {childrenNodes.map(child => <CanvasNode key={child.id} node={child} isNested={true} />)}
+        </DropZone>
+      );
+      
       case 'grid': return (
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(${node.props.columns}, 1fr)`, gap: `${node.props.gap}px` }} className="w-full">
-          {Array.from({length: node.props.columns}).map((_, i) => (
-            <div key={i} className="bg-gray-50 border border-dashed border-gray-300 min-h-[100px] rounded flex items-center justify-center text-xs text-gray-400">Col {i+1}</div>
-          ))}
+          {Array.from({length: node.props.columns}).map((_, i) => {
+            const colId = `${node.id}-col-${i}`;
+            const colNodes = nodes.filter(n => n.parentId === colId);
+            return (
+              <DropZone key={i} id={colId} className="bg-gray-50 border border-dashed border-gray-300 min-h-[100px] rounded p-2 flex flex-col">
+                 {colNodes.length === 0 && <div className="text-xs text-gray-400 text-center my-auto">Col {i+1}</div>}
+                 {colNodes.map(child => <CanvasNode key={child.id} node={child} isNested={true} />)}
+              </DropZone>
+            );
+          })}
         </div>
       );
+      
       case 'global_component': return (
         <div className="bg-blue-50 border border-blue-200 p-4 rounded text-center text-blue-800 flex flex-col items-center justify-center">
           <CompIcon size={24} className="mb-2 text-blue-500" />
           <span className="font-medium">Global Component Ref: {node.ref_id}</span>
         </div>
       );
-      default: return <div className="p-4 bg-red-50 text-red-500 border border-red-200">Unknown Element</div>;
+      default: return null;
     }
   };
 
@@ -96,7 +124,7 @@ function CanvasNode({ node }) {
     <div 
       ref={setNodeRef} style={style} {...attributes} {...listeners}
       onClick={(e) => { e.stopPropagation(); selectNode(node.id); }}
-      className={`relative mb-4 group cursor-pointer border-2 ${isSelected ? 'border-gold ring-4 ring-gold/20' : 'border-transparent hover:border-gray-200'} transition-all duration-200`}
+      className={`relative mb-4 group cursor-pointer border-2 ${isSelected ? 'border-gold ring-2 ring-gold/20' : 'border-transparent hover:border-gray-200'} transition-all duration-200`}
     >
       {isSelected && (
         <div className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1.5 shadow-md cursor-pointer hover:bg-red-600 hover:scale-110 transition-transform z-20" onClick={(e) => { e.stopPropagation(); deleteNode(node.id); }}>
@@ -110,57 +138,67 @@ function CanvasNode({ node }) {
   );
 }
 
-function Canvas() {
-  const { nodes, selectNode } = useBuilderStore();
-  const { setNodeRef, isOver } = useDroppable({ id: 'canvas' });
-
-  return (
-    <div 
-      ref={setNodeRef} onClick={() => selectNode(null)}
-      className={`w-full max-w-5xl min-h-[800px] bg-white mx-auto shadow-xl ring-1 ${isOver ? 'ring-gold bg-blue-50/10' : 'ring-gray-200'} transition-colors`}
-    >
-      {nodes.length === 0 ? (
-        <div className="h-full flex flex-col items-center justify-center text-gray-400">
-          <div className="p-8 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center">
-            <Plus size={32} className="mb-4 text-gray-300" />
-            <p className="text-lg font-medium text-gray-500">Drag elements here</p>
-          </div>
-        </div>
-      ) : (
-        <div className="p-8">
-          <SortableContext items={nodes.map(n => n.id)} strategy={verticalListSortingStrategy}>
-            {nodes.map(node => <CanvasNode key={node.id} node={node} />)}
-          </SortableContext>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Main App
 function App() {
-  const { addNode, moveNode, selectedId, nodes, pages, globalComponents, pageId, pageTitle, updateNodeProp } = useBuilderStore();
+  const { addNode, moveNode, updateNode, selectedId, nodes, pages, globalComponents, pageId, pageTitle, updateNodeProp } = useBuilderStore();
   const { publish, isPublishing, message } = usePublish();
   const { loadPage, createPage, saveComponent } = useApi();
+  
   const [activeDragId, setActiveDragId] = useState(null);
   const [activeTab, setActiveTab] = useState('elements'); 
+  const [showPageModal, setShowPageModal] = useState(false);
+  const [newPageTitle, setNewPageTitle] = useState('');
+  const [newPageSlug, setNewPageSlug] = useState('');
+
+  const rootNodes = nodes.filter(n => !n.parentId);
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
     setActiveDragId(null);
     if (!over) return;
 
-    if (active.data.current?.isSidebarElement && over.id === 'canvas') {
-      addNode({ type: active.data.current.type, props: {}, ref_id: active.data.current.ref_id });
-    } else if (!active.data.current?.isSidebarElement && active.id !== over.id) {
-      moveNode(active.id, over.id);
+    const isSidebar = active.data.current?.isSidebarElement;
+    
+    // Determine the parent ID based on where it was dropped
+    let targetParentId = null;
+    if (over.id !== 'canvas') {
+      // If it dropped over an existing node, check if that node is a container
+      const targetNode = nodes.find(n => n.id === over.id);
+      if (targetNode && targetNode.type === 'container') {
+        targetParentId = targetNode.id;
+      } else if (String(over.id).includes('-col-')) {
+        // It's a grid column dropzone
+        targetParentId = String(over.id);
+      } else if (targetNode && targetNode.parentId) {
+        targetParentId = targetNode.parentId;
+      }
+    }
+
+    if (isSidebar) {
+      // Create new node
+      addNode({ 
+        type: active.data.current.type, 
+        props: {}, 
+        ref_id: active.data.current.ref_id,
+        parentId: targetParentId
+      });
+    } else {
+      // Reordering or moving
+      if (active.id !== over.id) {
+        // If moving into a new parent zone
+        updateNode(active.id, { parentId: targetParentId });
+        moveNode(active.id, over.id);
+      }
     }
   };
 
   const selectedNode = nodes.find(n => n.id === selectedId);
 
   return (
-    <DndContext onDragStart={(e) => setActiveDragId(e.active.id)} onDragEnd={handleDragEnd}>
+    <DndContext 
+      collisionDetection={pointerWithin} // Crucial for nested droppables
+      onDragStart={(e) => setActiveDragId(e.active.id)} 
+      onDragEnd={handleDragEnd}
+    >
       <div className="flex h-screen w-screen bg-[#f3f4f6] text-gray-900 overflow-hidden font-sans">
         
         {/* LEFT SIDEBAR */}
@@ -207,11 +245,7 @@ function App() {
             {activeTab === 'pages' && (
               <div className="p-4 space-y-2">
                 <button 
-                  onClick={() => {
-                    const title = prompt("Page Title?");
-                    const slug = prompt("URL Slug? (e.g. /about)");
-                    if (title && slug) createPage(title, slug);
-                  }}
+                  onClick={() => setShowPageModal(true)}
                   className="w-full flex items-center justify-center gap-2 p-3 bg-navy hover:bg-navy/90 text-white font-medium rounded-lg text-sm mb-4 transition-colors shadow-sm"
                 ><Plus size={16}/> Create New Page</button>
                 {pages.map(p => (
@@ -234,7 +268,6 @@ function App() {
                     <SidebarItem key={c.id} id={c.id} type="global_component" ref_id={c.id} icon={CompIcon} label={c.name} />
                   ))}
                 </div>
-                {globalComponents.length === 0 && <div className="text-sm text-gray-400 text-center mt-4">No global components saved yet.</div>}
               </div>
             )}
           </div>
@@ -253,8 +286,22 @@ function App() {
               </button>
             </div>
           </div>
+          
           <div className="flex-1 overflow-auto flex items-start justify-center pt-24 pb-32 w-full h-full">
-            <Canvas />
+             <DropZone id="canvas" className="w-full max-w-5xl min-h-[800px] bg-white mx-auto shadow-xl ring-1 ring-gray-200 p-8" onClick={() => useBuilderStore.getState().selectNode(null)}>
+                {rootNodes.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-gray-400">
+                    <div className="p-8 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center">
+                      <Plus size={32} className="mb-4 text-gray-300" />
+                      <p className="text-lg font-medium text-gray-500">Drag elements here</p>
+                    </div>
+                  </div>
+                ) : (
+                  <SortableContext items={rootNodes.map(n => n.id)} strategy={verticalListSortingStrategy}>
+                    {rootNodes.map(node => <CanvasNode key={node.id} node={node} />)}
+                  </SortableContext>
+                )}
+             </DropZone>
           </div>
         </div>
 
@@ -262,8 +309,7 @@ function App() {
         <div className="w-80 bg-white border-l border-gray-200 flex flex-col shadow-lg z-20">
           <div className="h-14 border-b border-gray-200 flex items-center px-4 bg-gray-50">
             <h2 className="font-bold text-navy flex items-center gap-2 text-sm uppercase tracking-wider">
-              <Settings size={16} />
-              Inspector
+              <Settings size={16} /> Inspector
             </h2>
           </div>
           <div className="flex-1 overflow-y-auto p-5">
@@ -275,15 +321,11 @@ function App() {
 
                 {selectedNode.type !== 'global_component' && (
                   <div className="space-y-5 mb-8">
-                    {/* Dynamic Property Controls based on type */}
+                    {/* Props Fields... */}
                     {(selectedNode.props.text !== undefined) && (
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Content</label>
-                        <textarea 
-                          className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:border-gold focus:ring-1 outline-none min-h-[80px]"
-                          value={selectedNode.props.text}
-                          onChange={(e) => updateNodeProp(selectedId, 'text', e.target.value)}
-                        />
+                        <textarea className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:border-gold outline-none min-h-[80px]" value={selectedNode.props.text} onChange={(e) => updateNodeProp(selectedId, 'text', e.target.value)} />
                       </div>
                     )}
 
@@ -337,54 +379,58 @@ function App() {
                       <>
                         <div>
                           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Title</label>
-                          <input type="text" value={selectedNode.props.title} onChange={(e) => updateNodeProp(selectedId, 'title', e.target.value)} className="w-full border border-gray-200 p-2 text-sm rounded outline-none focus:border-gold"/>
+                          <input type="text" value={selectedNode.props.title} onChange={(e) => updateNodeProp(selectedId, 'title', e.target.value)} className="w-full border border-gray-200 p-2 text-sm rounded outline-none"/>
                         </div>
                         <div>
                           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Description</label>
-                          <textarea value={selectedNode.props.description} onChange={(e) => updateNodeProp(selectedId, 'description', e.target.value)} className="w-full border border-gray-200 p-2 text-sm rounded outline-none focus:border-gold min-h-[60px]"/>
+                          <textarea value={selectedNode.props.description} onChange={(e) => updateNodeProp(selectedId, 'description', e.target.value)} className="w-full border border-gray-200 p-2 text-sm rounded outline-none min-h-[60px]"/>
                         </div>
                       </>
-                    )}
-
-                    {(selectedNode.type === 'video' || selectedNode.type === 'map') && (
-                      <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">{selectedNode.type === 'video' ? 'Video URL' : 'Address'}</label>
-                        <input type="text" value={selectedNode.props.url || selectedNode.props.address} onChange={(e) => updateNodeProp(selectedId, selectedNode.type === 'video' ? 'url' : 'address', e.target.value)} className="w-full border border-gray-200 p-2 text-sm rounded outline-none focus:border-gold"/>
-                      </div>
                     )}
                   </div>
                 )}
                 
-                {selectedNode.type !== 'global_component' && (
-                  <div className="pt-6 border-t border-gray-100">
-                    <button 
-                      onClick={() => {
-                        const name = prompt("Name this global component? (e.g. Main Header)");
-                        if (name) saveComponent(name, [selectedNode]);
-                      }}
-                      className="w-full flex items-center justify-center gap-2 p-3 bg-gray-50 hover:bg-gold hover:text-white text-navy font-medium rounded-lg text-sm transition-colors border border-gray-200 hover:border-gold"
-                    >
-                      <Save size={16}/> Save as Global Component
-                    </button>
-                  </div>
-                )}
               </div>
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400">
                 <Settings size={32} className="mb-4 text-gray-200" />
-                <p className="text-sm font-medium">Select an element on the canvas to view and edit its properties.</p>
+                <p className="text-sm font-medium">Select an element on the canvas to edit its properties.</p>
               </div>
             )}
           </div>
         </div>
 
-        <DragOverlay>
-          {activeDragId ? (
-             <div className="p-3 bg-navy border border-gold rounded-lg shadow-xl flex items-center gap-3 text-white">
-               <MousePointer2 size={16} className="text-gold" /> Dragging Element
-             </div>
-          ) : null}
-        </DragOverlay>
+        {/* Page Modal */}
+        {showPageModal && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+            <div className="bg-white rounded-lg shadow-xl w-96 p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-navy text-lg">Create New Page</h3>
+                <button onClick={() => setShowPageModal(false)}><X size={20} className="text-gray-400"/></button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Page Title</label>
+                  <input type="text" value={newPageTitle} onChange={e => setNewPageTitle(e.target.value)} className="w-full border p-2 rounded outline-none focus:border-gold" placeholder="e.g. About Us" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">URL Slug</label>
+                  <input type="text" value={newPageSlug} onChange={e => setNewPageSlug(e.target.value)} className="w-full border p-2 rounded outline-none focus:border-gold" placeholder="e.g. /about" />
+                </div>
+                <button 
+                  onClick={async () => {
+                    if (newPageTitle && newPageSlug) {
+                      await createPage(newPageTitle, newPageSlug);
+                      setShowPageModal(false);
+                      setNewPageTitle(''); setNewPageSlug('');
+                    }
+                  }}
+                  className="w-full bg-navy text-white p-3 rounded font-bold hover:bg-gold transition-colors mt-4"
+                >Create Page</button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </DndContext>

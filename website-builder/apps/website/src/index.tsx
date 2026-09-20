@@ -21,15 +21,18 @@ const Layout: FC = (props) => {
   );
 };
 
-const renderNode = (node: any, componentsMap: Record<string, any[]>) => {
+const renderNode = (node: any, allNodes: any[], componentsMap: Record<string, any[]>) => {
   if (node.type === 'global_component') {
     const compNodes = componentsMap[node.ref_id] || [];
-    return <div class="w-full">{compNodes.map((n: any) => renderNode(n, componentsMap))}</div>;
+    return <div class="w-full">{compNodes.map((n: any) => renderNode(n, compNodes, componentsMap))}</div>;
   }
   
+  // Find nested children
+  const children = allNodes.filter(n => n.parentId === node.id);
+
   switch (node.type) {
     case 'heading': return <h1 class="text-5xl font-bold font-serif text-navy mb-6">{node.props.text || 'Heading'}</h1>;
-    case 'text': return <p class="text-lg text-gray-700 leading-relaxed mb-4">{node.props.text || 'Text block'}</p>;
+    case 'text': return <p class="text-lg text-gray-700 leading-relaxed mb-4 whitespace-pre-wrap">{node.props.text || 'Text block'}</p>;
     case 'button': return <button class="bg-navy hover:bg-gold transition-colors text-white px-8 py-3 rounded font-medium shadow-md mt-4">{node.props.text || 'Button'}</button>;
     case 'image': return <div class="bg-gray-200 h-64 w-full rounded my-6 flex items-center justify-center text-gray-500 shadow-inner">Image Placeholder</div>;
     case 'spacer': return <div style={{ height: `${node.props.height || 50}px` }} class="w-full block"></div>;
@@ -46,7 +49,6 @@ const renderNode = (node: any, componentsMap: Record<string, any[]>) => {
     );
     case 'icon': return (
       <div class="inline-flex items-center justify-center p-4">
-        {/* Placeholder since Lucide SSR requires mapping. Real builder would use an SVG lib or icon font here */}
         <span style={{color: node.props.color || '#0d1f3c', fontSize: `${node.props.size || 24}px`}}>★</span>
       </div>
     );
@@ -58,15 +60,21 @@ const renderNode = (node: any, componentsMap: Record<string, any[]>) => {
       </div>
     );
     case 'container': return (
-      <div style={{ padding: `${node.props.padding || 20}px`, backgroundColor: node.props.bgColor || '#ffffff' }} class="w-full rounded-lg shadow-sm border border-gray-100">
-        <p class="text-gray-400 text-center italic text-sm">(Container: Currently rendering empty as flat canvas doesn't support nested render yet)</p>
+      <div style={{ padding: `${node.props.padding || 20}px`, backgroundColor: node.props.bgColor || '#ffffff' }} class="w-full rounded-lg shadow-sm border border-gray-100 mb-6">
+        {children.map(child => renderNode(child, allNodes, componentsMap))}
       </div>
     );
     case 'grid': return (
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${node.props.columns || 2}, 1fr)`, gap: `${node.props.gap || 16}px` }} class="w-full my-6">
-        {Array.from({length: node.props.columns || 2}).map((_, i) => (
-          <div class="bg-gray-50 border border-gray-100 rounded-lg min-h-[150px] p-6 text-gray-400 flex items-center justify-center italic text-sm">Grid Column {i+1}</div>
-        ))}
+        {Array.from({length: node.props.columns || 2}).map((_, i) => {
+           const colId = `${node.id}-col-${i}`;
+           const colChildren = allNodes.filter(n => n.parentId === colId);
+           return (
+             <div class="flex flex-col">
+               {colChildren.map(child => renderNode(child, allNodes, componentsMap))}
+             </div>
+           );
+        })}
       </div>
     );
     default: return null;
@@ -93,6 +101,7 @@ app.get('/*', async (c) => {
 
     const page = results[0] as any;
     const nodes = JSON.parse(page.page_json || '[]');
+    const rootNodes = nodes.filter((n: any) => !n.parentId);
 
     const { results: compResults } = await c.env.DB.prepare('SELECT * FROM components WHERE site_id = ?').bind('default-site').all();
     const componentsMap: Record<string, any[]> = {};
@@ -103,7 +112,7 @@ app.get('/*', async (c) => {
     return c.html(
       <Layout title={page.title}>
         <div class="max-w-5xl mx-auto py-20 px-8 bg-white min-h-screen shadow-lg border-x border-gray-100">
-          {nodes.map((node: any) => renderNode(node, componentsMap))}
+          {rootNodes.map((node: any) => renderNode(node, nodes, componentsMap))}
         </div>
       </Layout>
     );
