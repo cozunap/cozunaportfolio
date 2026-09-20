@@ -13,7 +13,7 @@ const Layout: FC = (props) => {
         <title>{props.title || 'Premium Website'}</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <script dangerouslySetInnerHTML={{__html: `tailwind.config = { theme: { extend: { colors: { navy: '#0d1f3c', gold: '#b89a5a' }, fontFamily: { serif: ['"Playfair Display"', 'serif'], sans: ['Inter', 'sans-serif'] } } } }`}} />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;600;700&family=Lato:wght@400;600;700&family=Oswald:wght@400;600;700&family=Raleway:wght@400;600;700&display=swap" rel="stylesheet" />
         <style dangerouslySetInnerHTML={{__html: `body { margin: 0; padding: 0; background-color: #f9fafb; font-family: 'Inter', sans-serif; }`}} />
       </head>
       <body>{props.children}</body>
@@ -42,6 +42,8 @@ const renderNode = (node: any, allNodes: any[], componentsMap: Record<string, an
     backgroundColor: node.props.bgColor || 'transparent',
     width: node.props.width || '100%',
     minHeight: node.props.height || undefined,
+    color: node.props.color || undefined,
+    fontFamily: node.props.fontFamily || 'inherit',
   };
 
   const renderContent = () => {

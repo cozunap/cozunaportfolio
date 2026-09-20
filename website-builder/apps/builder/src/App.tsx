@@ -78,6 +78,8 @@ function CanvasNode({ node, isNested = false }) {
     backgroundColor: node.props.bgColor || 'transparent',
     width: node.props.width || '100%',
     minHeight: node.props.height || undefined,
+    color: node.props.color || undefined,
+    fontFamily: node.props.fontFamily || 'inherit',
   };
 
   const childrenNodes = nodes.filter(n => n.parentId === node.id);
@@ -198,13 +200,13 @@ function CanvasNode({ node, isNested = false }) {
   );
 }
 
-function App() {
-  const { addNode, moveNode, updateNode, selectedId, nodes, pages, globalComponents, pageId, pageTitle, updateNodeProp } = useBuilderStore();
+export default function App() {
+  const { nodes, addNode, updateNode, updateNodeProp, deleteNode, selectNode, selectedId, moveNode, pageId, pageTitle, pageSlug, pages, setPageInfo, globalComponents, addGlobalColor, removeGlobalColor } = useBuilderStore();
+  const [activeTab, setActiveTab] = useState<'elements'|'pages'|'globals'>('elements');
   const { publish, isPublishing, message } = usePublish();
   const { loadPage, createPage, saveComponent, uploadMedia, uploading } = useApi();
   
   const [activeDragId, setActiveDragId] = useState(null);
-  const [activeTab, setActiveTab] = useState('elements'); 
   const [showPageModal, setShowPageModal] = useState(false);
   const [newPageTitle, setNewPageTitle] = useState('');
   const [newPageSlug, setNewPageSlug] = useState('');
@@ -444,10 +446,25 @@ function App() {
                         {selectedNode.props.bgColor !== undefined && (
                           <div>
                             <label className="block text-xs font-bold text-gray-500 mb-1">Background Color</label>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 mb-2">
                                <input type="color" value={selectedNode.props.bgColor} onChange={(e) => updateNodeProp(selectedId, 'bgColor', e.target.value)} className="w-8 h-8 rounded cursor-pointer"/>
                                <span className="text-xs text-gray-500 uppercase">{selectedNode.props.bgColor}</span>
                             </div>
+                            
+                            {/* Global Color Swatches */}
+                            {useBuilderStore.getState().globalColors?.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  {useBuilderStore.getState().globalColors.map(gc => (
+                                    <button 
+                                      key={gc.name} 
+                                      onClick={() => updateNodeProp(selectedId, 'bgColor', gc.hex)}
+                                      title={gc.name}
+                                      className="w-6 h-6 rounded-full border border-gray-200 cursor-pointer hover:scale-110 transition-transform shadow-sm"
+                                      style={{backgroundColor: gc.hex}}
+                                    ></button>
+                                  ))}
+                                </div>
+                            )}
                           </div>
                         )}
 
@@ -512,5 +529,3 @@ function App() {
     </DndContext>
   );
 }
-
-export default App;

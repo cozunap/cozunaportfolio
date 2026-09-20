@@ -19,6 +19,7 @@ interface BuilderState {
   selectedId: string | null;
   pages: PageMeta[];
   globalComponents: ComponentMeta[];
+  globalColors: { name: string; hex: string }[];
   
   setNodes: (nodes: BuilderNode[]) => void;
   setPageInfo: (id: string, title: string, slug: string) => void;
@@ -31,6 +32,8 @@ interface BuilderState {
   deleteNode: (id: string) => void;
   moveNode: (activeId: string, overId: string) => void;
   selectNode: (id: string | null) => void;
+  addGlobalColor: (name: string, hex: string) => void;
+  removeGlobalColor: (index: number) => void;
 }
 
 export const useBuilderStore = create<BuilderState>((set) => ({
@@ -111,6 +114,10 @@ export const useBuilderStore = create<BuilderState>((set) => ({
     newNodes.splice(newIndex, 0, moved);
     return { nodes: newNodes };
   }),
-  
-  selectNode: (id) => set({ selectedId: id })
+
+  selectNode: (id) => set({ selectedId: id }),
+
+  globalColors: [],
+  addGlobalColor: (name, hex) => set((state) => ({ globalColors: [...state.globalColors, { name, hex }] })),
+  removeGlobalColor: (index) => set((state) => ({ globalColors: state.globalColors.filter((_, i) => i !== index) }))
 }));
