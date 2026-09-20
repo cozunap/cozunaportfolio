@@ -6,5 +6,8 @@
   "scripts": {
     "dev": "echo \"Not implemented\"",
     "build": "echo \"Not implemented\""
+  },
+  "dependencies": {
+    "hono": "^4.13.8"
   }
 }
