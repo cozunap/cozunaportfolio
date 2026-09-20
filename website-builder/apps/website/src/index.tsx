@@ -26,11 +26,49 @@ const renderNode = (node: any, componentsMap: Record<string, any[]>) => {
     const compNodes = componentsMap[node.ref_id] || [];
     return <div class="w-full">{compNodes.map((n: any) => renderNode(n, componentsMap))}</div>;
   }
+  
   switch (node.type) {
     case 'heading': return <h1 class="text-5xl font-bold font-serif text-navy mb-6">{node.props.text || 'Heading'}</h1>;
     case 'text': return <p class="text-lg text-gray-700 leading-relaxed mb-4">{node.props.text || 'Text block'}</p>;
     case 'button': return <button class="bg-navy hover:bg-gold transition-colors text-white px-8 py-3 rounded font-medium shadow-md mt-4">{node.props.text || 'Button'}</button>;
     case 'image': return <div class="bg-gray-200 h-64 w-full rounded my-6 flex items-center justify-center text-gray-500 shadow-inner">Image Placeholder</div>;
+    case 'spacer': return <div style={{ height: `${node.props.height || 50}px` }} class="w-full block"></div>;
+    case 'divider': return <hr style={{ borderColor: node.props.color || '#e5e7eb', borderWidth: `${node.props.thickness || 1}px` }} class="w-full my-8 block" />;
+    case 'video': return (
+      <div class="w-full aspect-video rounded-lg overflow-hidden my-6 shadow-lg">
+        <iframe src={node.props.url} class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+    );
+    case 'map': return (
+      <div class="w-full h-96 rounded-lg overflow-hidden my-6 shadow-md bg-gray-100 flex items-center justify-center text-gray-400">
+        Google Maps API Integration Placeholder (Address: {node.props.address})
+      </div>
+    );
+    case 'icon': return (
+      <div class="inline-flex items-center justify-center p-4">
+        {/* Placeholder since Lucide SSR requires mapping. Real builder would use an SVG lib or icon font here */}
+        <span style={{color: node.props.color || '#0d1f3c', fontSize: `${node.props.size || 24}px`}}>★</span>
+      </div>
+    );
+    case 'image_box': return (
+      <div class="text-center p-8 border border-gray-100 rounded-xl shadow-md bg-white hover:shadow-lg transition-shadow">
+        <div class="w-full h-48 bg-gray-100 rounded-lg mb-6"></div>
+        <h3 class="font-serif font-bold text-2xl text-navy mb-3">{node.props.title || 'Title'}</h3>
+        <p class="text-gray-600 text-base">{node.props.description || 'Description'}</p>
+      </div>
+    );
+    case 'container': return (
+      <div style={{ padding: `${node.props.padding || 20}px`, backgroundColor: node.props.bgColor || '#ffffff' }} class="w-full rounded-lg shadow-sm border border-gray-100">
+        <p class="text-gray-400 text-center italic text-sm">(Container: Currently rendering empty as flat canvas doesn't support nested render yet)</p>
+      </div>
+    );
+    case 'grid': return (
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${node.props.columns || 2}, 1fr)`, gap: `${node.props.gap || 16}px` }} class="w-full my-6">
+        {Array.from({length: node.props.columns || 2}).map((_, i) => (
+          <div class="bg-gray-50 border border-gray-100 rounded-lg min-h-[150px] p-6 text-gray-400 flex items-center justify-center italic text-sm">Grid Column {i+1}</div>
+        ))}
+      </div>
+    );
     default: return null;
   }
 };
@@ -40,11 +78,8 @@ app.get('/*', async (c) => {
   if (!slug.startsWith('/')) slug = '/' + slug;
 
   try {
-    // 1. Fetch Page
     const { results } = await c.env.DB.prepare('SELECT * FROM pages WHERE site_id = ? AND slug = ?').bind('default-site', slug).all();
-    
     if (!results || results.length === 0) {
-      // Return 404 cleanly
       c.status(404);
       return c.html(
         <Layout title="404 Not Found">
@@ -59,7 +94,6 @@ app.get('/*', async (c) => {
     const page = results[0] as any;
     const nodes = JSON.parse(page.page_json || '[]');
 
-    // 2. Fetch all components to resolve references
     const { results: compResults } = await c.env.DB.prepare('SELECT * FROM components WHERE site_id = ?').bind('default-site').all();
     const componentsMap: Record<string, any[]> = {};
     for (const comp of (compResults || [])) {
@@ -68,7 +102,7 @@ app.get('/*', async (c) => {
 
     return c.html(
       <Layout title={page.title}>
-        <div class="max-w-4xl mx-auto py-20 px-8 bg-white min-h-screen shadow-sm border-x border-gray-100">
+        <div class="max-w-5xl mx-auto py-20 px-8 bg-white min-h-screen shadow-lg border-x border-gray-100">
           {nodes.map((node: any) => renderNode(node, componentsMap))}
         </div>
       </Layout>
