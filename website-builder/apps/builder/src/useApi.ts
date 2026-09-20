@@ -6,6 +6,7 @@ const API_BASE = "https://visual-builder-api.cmozunap.workers.dev/api";
 export function useApi() {
   const { setPages, setGlobalComponents, setNodes, setPageInfo, pageId } = useBuilderStore();
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const fetchLists = async () => {
     try {
@@ -80,10 +81,34 @@ export function useApi() {
     }
   };
 
+  const uploadMedia = async (file: File): Promise<string | null> => {
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+      const res = await fetch(`${API_BASE}/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.url;
+      }
+      console.error("Upload failed", await res.text());
+      return null;
+    } catch (e) {
+      console.error("Upload error:", e);
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   useEffect(() => {
     fetchLists();
     if (pageId) loadPage(pageId);
   }, []);
 
-  return { fetchLists, loadPage, createPage, saveComponent, loading };
+  return { fetchLists, loadPage, createPage, saveComponent, uploadMedia, loading, uploading };
 }

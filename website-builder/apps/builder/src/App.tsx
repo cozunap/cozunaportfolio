@@ -171,7 +171,7 @@ function CanvasNode({ node, isNested = false }) {
 function App() {
   const { addNode, moveNode, updateNode, selectedId, nodes, pages, globalComponents, pageId, pageTitle, updateNodeProp } = useBuilderStore();
   const { publish, isPublishing, message } = usePublish();
-  const { loadPage, createPage, saveComponent } = useApi();
+  const { loadPage, createPage, saveComponent, uploadMedia, uploading } = useApi();
   
   const [activeDragId, setActiveDragId] = useState(null);
   const [activeTab, setActiveTab] = useState('elements'); 
@@ -343,9 +343,31 @@ function App() {
                         
                         {/* New URL fields for Images and Video */}
                         {(selectedNode.type === 'image' || selectedNode.type === 'image_box' || selectedNode.type === 'video' || selectedNode.type === 'map') && (
-                          <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1">Media URL (Paste Link)</label>
-                            <input type="text" value={selectedNode.props.url || selectedNode.props.address || ''} onChange={(e) => updateNodeProp(selectedId, selectedNode.type === 'map' ? 'address' : 'url', e.target.value)} placeholder="https://..." className="w-full border border-gray-200 p-2 text-sm rounded outline-none focus:border-gold"/>
+                          <div className="space-y-2">
+                            <label className="block text-xs font-bold text-gray-500 mb-1">Media Source</label>
+                            
+                            {(selectedNode.type === 'image' || selectedNode.type === 'image_box') && (
+                              <div className="mb-3">
+                                <label className="flex items-center justify-center w-full p-3 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gold/5 hover:border-gold cursor-pointer transition-colors">
+                                  <span className="text-sm font-medium text-navy">{uploading ? 'Uploading to GitHub...' : 'Upload Image from Computer'}</span>
+                                  <input 
+                                    type="file" 
+                                    accept="image/*" 
+                                    className="hidden" 
+                                    onChange={async (e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        const url = await uploadMedia(file);
+                                        if (url) updateNodeProp(selectedId, 'url', url);
+                                      }
+                                    }} 
+                                    disabled={uploading}
+                                  />
+                                </label>
+                              </div>
+                            )}
+
+                            <input type="text" value={selectedNode.props.url || selectedNode.props.address || ''} onChange={(e) => updateNodeProp(selectedId, selectedNode.type === 'map' ? 'address' : 'url', e.target.value)} placeholder="Or paste link: https://..." className="w-full border border-gray-200 p-2 text-sm rounded outline-none focus:border-gold"/>
                             <span className="text-[10px] text-gray-400 mt-1 block">Paste an image link or YouTube embed link</span>
                           </div>
                         )}
