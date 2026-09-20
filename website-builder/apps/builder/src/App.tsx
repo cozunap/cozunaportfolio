@@ -10,7 +10,7 @@ import {
   Layout, MousePointer2, Type, Image as ImageIcon, Box, Layers, 
   Settings, Trash2, FileText, Component as CompIcon, Plus, Save,
   Square, Columns, Minus, ArrowDownUp, Video, MapPin, Star, AlignLeft,
-  ChevronDown, ChevronRight, X, AlignCenter, AlignRight
+  ChevronDown, ChevronRight, X, AlignCenter, AlignRight, Menu
 } from 'lucide-react';
 import { useBuilderStore } from './store/useBuilderStore';
 import { usePublish } from './usePublish';
@@ -100,6 +100,15 @@ function CanvasNode({ node, isNested = false }) {
       );
       case 'spacer': return <div style={{ height: `${node.props.height}px` }} className="w-full block"></div>;
       case 'divider': return <hr style={{ borderColor: node.props.color, borderWidth: `${node.props.thickness}px` }} className="w-full" />;
+      case 'menu': return (
+        <nav className="w-full flex items-center justify-center gap-6 flex-wrap">
+          {(node.props.links || []).map((link: any, i: number) => (
+            <a key={i} href={link.url} onClick={e => e.preventDefault()} style={{ color: node.props.color || '#0d1f3c' }} className="text-sm font-semibold hover:opacity-75 transition-opacity">
+              {link.label}
+            </a>
+          ))}
+        </nav>
+      );
       case 'video': {
         const isMp4 = node.props.url && (node.props.url.endsWith('.mp4') || node.props.url.includes('jsdelivr'));
         return (
@@ -278,6 +287,7 @@ export default function App() {
                   <SidebarItem type="button" icon={Box} label="Button" />
                   <SidebarItem type="icon" icon={Star} label="Icon" />
                   <SidebarItem type="image_box" icon={Layers} label="Image Box" />
+                  <SidebarItem type="menu" icon={Menu} label="Nav Menu" />
                 </SidebarCategory>
                 <SidebarCategory title="Media" defaultOpen={false}>
                   <SidebarItem type="video" icon={Video} label="Video" />
@@ -409,6 +419,24 @@ export default function App() {
                             <input type="text" value={selectedNode.props.title} onChange={(e) => updateNodeProp(selectedId, 'title', e.target.value)} className="w-full border border-gray-200 p-2 text-sm rounded outline-none" placeholder="Title"/>
                             <textarea value={selectedNode.props.description} onChange={(e) => updateNodeProp(selectedId, 'description', e.target.value)} className="w-full border border-gray-200 p-2 text-sm rounded outline-none min-h-[60px]" placeholder="Description"/>
                           </>
+                        )}
+                        {selectedNode.type === 'menu' && (
+                          <div className="space-y-2">
+                             <label className="block text-xs font-bold text-gray-500 mb-1">Menu Links (Label, URL)</label>
+                             <textarea 
+                               rows={5}
+                               className="w-full border p-2 text-xs rounded outline-none focus:border-gold"
+                               value={(selectedNode.props.links || []).map((l:any) => `${l.label}, ${l.url}`).join('\n')}
+                               onChange={(e) => {
+                                 const parsed = e.target.value.split('\n').map(line => {
+                                   const [label, ...rest] = line.split(',');
+                                   return { label: label.trim(), url: rest.join(',').trim() || '#' };
+                                 });
+                                 updateNodeProp(selectedId, 'links', parsed);
+                               }}
+                               placeholder="Home, /&#10;About, /about"
+                             ></textarea>
+                          </div>
                         )}
                       </div>
                     </div>

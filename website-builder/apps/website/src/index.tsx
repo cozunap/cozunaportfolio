@@ -62,6 +62,15 @@ const renderNode = (node: any, allNodes: any[], componentsMap: Record<string, an
       );
       case 'spacer': return <div style={{...styleObj, height: `${node.props.height || 50}px`}} class="w-full block"></div>;
       case 'divider': return <div style={styleObj}><hr style={{ borderColor: node.props.color || '#e5e7eb', borderWidth: `${node.props.thickness || 1}px` }} class="w-full block" /></div>;
+      case 'menu': return (
+        <nav style={styleObj} class="w-full flex items-center justify-center gap-6 flex-wrap">
+          {(node.props.links || []).map((link: any, i: number) => (
+            <a key={i} href={link.url} style={{ color: node.props.color || '#0d1f3c' }} class="text-sm font-semibold hover:opacity-75 transition-opacity">
+              {link.label}
+            </a>
+          ))}
+        </nav>
+      );
       case 'video': {
         const isMp4 = node.props.url && (node.props.url.endsWith('.mp4') || node.props.url.includes('jsdelivr'));
         return (

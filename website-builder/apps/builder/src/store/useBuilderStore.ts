@@ -72,6 +72,15 @@ export const useBuilderStore = create<BuilderState>((set) => ({
     if (node.type === 'divider') { defaultProps.color = '#e5e7eb'; defaultProps.thickness = 1; }
     if (node.type === 'video') defaultProps.url = 'https://www.youtube.com/embed/dQw4w9WgXcQ';
     if (node.type === 'map') defaultProps.address = 'New York, NY';
+    if (node.type === 'menu') {
+      defaultProps.links = [
+        { label: 'Home', url: '/' },
+        { label: 'About', url: '/about' },
+        { label: 'Services', url: '/services' },
+        { label: 'Contact', url: '/contact' }
+      ];
+      defaultProps.color = '#0d1f3c';
+    }
     if (node.type === 'icon') { defaultProps.icon = 'Star'; defaultProps.color = '#0d1f3c'; defaultProps.size = 24; }
     if (node.type === 'image_box') { defaultProps.title = 'Title'; defaultProps.description = 'Description'; }
     if (node.type === 'container') { defaultProps.paddingTop = 20; defaultProps.paddingBottom = 20; defaultProps.paddingLeft = 20; defaultProps.paddingRight = 20; defaultProps.bgColor = '#ffffff'; }
