@@ -40,6 +40,8 @@ const renderNode = (node: any, allNodes: any[], componentsMap: Record<string, an
     paddingLeft: `${node.props.paddingLeft || 0}px`,
     paddingRight: `${node.props.paddingRight || 0}px`,
     backgroundColor: node.props.bgColor || 'transparent',
+    width: node.props.width || '100%',
+    minHeight: node.props.height || undefined,
   };
 
   const renderContent = () => {

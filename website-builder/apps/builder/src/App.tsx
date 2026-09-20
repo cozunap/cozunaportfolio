@@ -76,6 +76,8 @@ function CanvasNode({ node, isNested = false }) {
     paddingLeft: `${node.props.paddingLeft || 0}px`,
     paddingRight: `${node.props.paddingRight || 0}px`,
     backgroundColor: node.props.bgColor || 'transparent',
+    width: node.props.width || '100%',
+    minHeight: node.props.height || undefined,
   };
 
   const childrenNodes = nodes.filter(n => n.parentId === node.id);
@@ -415,6 +417,21 @@ function App() {
                     <div>
                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Advanced Style</h4>
                       <div className="space-y-4">
+                        
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 mb-2">Sizing</label>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <span className="block text-[10px] text-gray-400 mb-1">WIDTH (e.g. 100%, 500px)</span>
+                              <input type="text" value={selectedNode.props.width || ''} onChange={(e) => updateNodeProp(selectedId, 'width', e.target.value)} placeholder="100%" className="w-full border p-1.5 text-xs rounded outline-none focus:border-gold"/>
+                            </div>
+                            <div>
+                              <span className="block text-[10px] text-gray-400 mb-1">MIN HEIGHT (e.g. 100vh, 300px)</span>
+                              <input type="text" value={selectedNode.props.height || ''} onChange={(e) => updateNodeProp(selectedId, 'height', e.target.value)} placeholder="auto" className="w-full border p-1.5 text-xs rounded outline-none focus:border-gold"/>
+                            </div>
+                          </div>
+                        </div>
+
                         <div>
                           <label className="block text-xs font-bold text-gray-500 mb-2">Alignment</label>
                           <div className="flex border border-gray-200 rounded-lg overflow-hidden">
