@@ -96,18 +96,33 @@ function CanvasNode({ node, isNested = false }) {
       );
       case 'spacer': return <div style={{ height: `${node.props.height}px` }} className="w-full block"></div>;
       case 'divider': return <hr style={{ borderColor: node.props.color, borderWidth: `${node.props.thickness}px` }} className="w-full" />;
-      case 'video': return (
-        <div className="w-full">
-           {node.props.url && node.props.url.includes('youtube.com') ? (
-             <div className="w-full aspect-video rounded-lg overflow-hidden shadow-md">
-               <iframe src={node.props.url} className="w-full h-full" frameBorder="0" allowFullScreen></iframe>
-             </div>
-           ) : (
-             <div className="w-full aspect-video bg-gray-900 rounded-lg flex items-center justify-center"><Video size={48} className="text-white opacity-50"/></div>
-           )}
+      case 'video': {
+        const isMp4 = node.props.url && (node.props.url.endsWith('.mp4') || node.props.url.includes('jsdelivr'));
+        return (
+          <div className="w-full relative">
+             {/* CRITICAL: This invisible overlay prevents the iframe/video player from swallowing clicks! */}
+             <div className="absolute inset-0 z-10 cursor-pointer"></div>
+             
+             {node.props.url ? (
+               <div className="w-full aspect-video rounded-lg overflow-hidden shadow-md bg-black">
+                 {isMp4 ? (
+                   <video src={node.props.url} className="w-full h-full object-cover" controls muted />
+                 ) : (
+                   <iframe src={node.props.url} className="w-full h-full pointer-events-none" frameBorder="0" allowFullScreen></iframe>
+                 )}
+               </div>
+             ) : (
+               <div className="w-full aspect-video bg-gray-900 rounded-lg flex items-center justify-center"><Video size={48} className="text-white opacity-50"/></div>
+             )}
+          </div>
+        );
+      }
+      case 'map': return (
+        <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center flex-col text-gray-500 relative">
+          <div className="absolute inset-0 z-10 cursor-pointer"></div>
+          <MapPin size={32} className="mb-2"/>Map: {node.props.address}
         </div>
       );
-      case 'map': return <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center flex-col text-gray-500"><MapPin size={32} className="mb-2"/>Map: {node.props.address}</div>;
       case 'icon': return <div className="inline-flex items-center justify-center"><Star size={node.props.size} color={node.props.color} /></div>;
       case 'image_box': return (
         <div className="text-center p-4 border border-gray-100 rounded-lg shadow-sm bg-white">
@@ -341,18 +356,18 @@ function App() {
                           </div>
                         )}
                         
-                        {/* New URL fields for Images and Video */}
+                        {/* Media URL / Upload fields */}
                         {(selectedNode.type === 'image' || selectedNode.type === 'image_box' || selectedNode.type === 'video' || selectedNode.type === 'map') && (
                           <div className="space-y-2">
                             <label className="block text-xs font-bold text-gray-500 mb-1">Media Source</label>
                             
-                            {(selectedNode.type === 'image' || selectedNode.type === 'image_box') && (
+                            {(selectedNode.type === 'image' || selectedNode.type === 'image_box' || selectedNode.type === 'video') && (
                               <div className="mb-3">
                                 <label className="flex items-center justify-center w-full p-3 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gold/5 hover:border-gold cursor-pointer transition-colors">
-                                  <span className="text-sm font-medium text-navy">{uploading ? 'Uploading to GitHub...' : 'Upload Image from Computer'}</span>
+                                  <span className="text-sm font-medium text-navy">{uploading ? 'Uploading to GitHub...' : (selectedNode.type === 'video' ? 'Upload MP4 Video' : 'Upload Image')}</span>
                                   <input 
                                     type="file" 
-                                    accept="image/*" 
+                                    accept={selectedNode.type === 'video' ? "video/mp4,video/webm" : "image/*"} 
                                     className="hidden" 
                                     onChange={async (e) => {
                                       const file = e.target.files?.[0];
@@ -367,7 +382,7 @@ function App() {
                               </div>
                             )}
 
-                            <input type="text" value={selectedNode.props.url || selectedNode.props.address || ''} onChange={(e) => updateNodeProp(selectedId, selectedNode.type === 'map' ? 'address' : 'url', e.target.value)} placeholder="Or paste link: https://..." className="w-full border border-gray-200 p-2 text-sm rounded outline-none focus:border-gold"/>
+                            <input type="text" value={selectedNode.props.url || selectedNode.props.address || ''} onChange={(e) => updateNodeProp(selectedId, selectedNode.type === 'map' ? 'address' : 'url', e.target.value)} placeholder="Or paste YouTube / Image Link..." className="w-full border border-gray-200 p-2 text-sm rounded outline-none focus:border-gold"/>
                             <span className="text-[10px] text-gray-400 mt-1 block">Paste an image link or YouTube embed link</span>
                           </div>
                         )}

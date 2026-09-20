@@ -58,17 +58,24 @@ const renderNode = (node: any, allNodes: any[], componentsMap: Record<string, an
       );
       case 'spacer': return <div style={{...styleObj, height: `${node.props.height || 50}px`}} class="w-full block"></div>;
       case 'divider': return <div style={styleObj}><hr style={{ borderColor: node.props.color || '#e5e7eb', borderWidth: `${node.props.thickness || 1}px` }} class="w-full block" /></div>;
-      case 'video': return (
-        <div style={styleObj} class="w-full">
-           {node.props.url && node.props.url.includes('youtube.com') ? (
-             <div class="w-full aspect-video rounded-lg overflow-hidden shadow-md">
-               <iframe src={node.props.url} class="w-full h-full" frameborder="0" allowfullscreen></iframe>
-             </div>
-           ) : (
-             <div class="w-full aspect-video bg-gray-900 rounded-lg flex items-center justify-center text-white opacity-50">Video Placeholder</div>
-           )}
-        </div>
-      );
+      case 'video': {
+        const isMp4 = node.props.url && (node.props.url.endsWith('.mp4') || node.props.url.includes('jsdelivr'));
+        return (
+          <div style={styleObj} class="w-full">
+             {node.props.url ? (
+               <div class="w-full aspect-video rounded-lg overflow-hidden shadow-md bg-black">
+                 {isMp4 ? (
+                   <video src={node.props.url} class="w-full h-full object-cover" controls playsinline></video>
+                 ) : (
+                   <iframe src={node.props.url} class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                 )}
+               </div>
+             ) : (
+               <div class="w-full aspect-video bg-gray-900 rounded-lg flex items-center justify-center text-white opacity-50">Video Placeholder</div>
+             )}
+          </div>
+        );
+      }
       case 'map': return (
         <div style={styleObj} class="w-full h-96 rounded-lg overflow-hidden shadow-md bg-gray-100 flex items-center justify-center text-gray-400">
           Google Maps API Integration Placeholder (Address: {node.props.address})
