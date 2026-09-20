@@ -4,7 +4,7 @@ import { useBuilderStore } from './store/useBuilderStore';
 const API_URL = "https://visual-builder-api.cmozunap.workers.dev/api/pages";
 
 export function usePublish() {
-  const { nodes, pageId } = useBuilderStore();
+  const { nodes, pageId, pageTitle, pageSlug } = useBuilderStore();
   const [isPublishing, setIsPublishing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -19,18 +19,16 @@ export function usePublish() {
         body: JSON.stringify({
           id: pageId,
           site_id: "default-site",
-          title: "Home",
-          slug: "/",
+          title: pageTitle,
+          slug: pageSlug,
           page_json: nodes
         })
       });
       
-      const data = await response.json();
-      
       if (response.ok) {
         setMessage("Published successfully!");
       } else {
-        setMessage(`Error: ${data.error || "Failed to publish"}`);
+        setMessage("Error publishing");
       }
     } catch (e: any) {
       setMessage(`Error: ${e.message}`);
