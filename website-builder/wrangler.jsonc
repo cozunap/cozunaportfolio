@@ -3,7 +3,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "visual-builder-api",
-  "main": "src/index.ts",
+  "main": "workers/api/src/index.ts",
   "compatibility_date": "2026-09-20",
   "d1_databases": [
     // { "binding": "DB", "database_name": "builder-db", "database_id": "YOUR_ID" }
