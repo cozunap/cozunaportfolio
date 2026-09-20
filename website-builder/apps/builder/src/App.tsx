@@ -5,6 +5,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities';
 import { Layout, MousePointer2, Type, Image as ImageIcon, Box, Layers, Settings, Trash2 } from 'lucide-react';
 import { useBuilderStore } from './store/useBuilderStore';
+import { usePublish } from './usePublish';
 
 // Sidebar Draggable Element
 function SidebarItem({ id, type, icon: Icon, label }) {
@@ -80,6 +81,7 @@ function Canvas() {
 
 function App() {
   const { addNode, moveNode, selectedId, nodes } = useBuilderStore();
+  const { publish, isPublishing, message } = usePublish();
   const [activeDragId, setActiveDragId] = useState(null);
 
   const handleDragStart = (event) => {
@@ -131,9 +133,10 @@ function App() {
               <button className="p-2 bg-gray-100 text-navy rounded"><MousePointer2 size={18} /></button>
             </div>
             <div className="flex items-center gap-4">
+              {message && <span className="text-sm font-medium text-gold">{message}</span>}
               <span className="text-sm text-gray-500">Draft saved</span>
-              <button className="bg-navy text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-opacity-90 transition">
-                Publish
+              <button onClick={publish} disabled={isPublishing} className="bg-navy text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-opacity-90 transition disabled:opacity-50">
+                {isPublishing ? "Publishing..." : "Publish"}
               </button>
             </div>
           </div>
