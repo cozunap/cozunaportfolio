@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "visual-builder-renderer",
+  "main": "src/index.tsx",
+  "compatibility_date": "2026-09-20",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "visual-builder-db",
+      "database_id": "2341fd8f-8026-4613-9a38-c2314560c993"
+    }
+  ]
+}
